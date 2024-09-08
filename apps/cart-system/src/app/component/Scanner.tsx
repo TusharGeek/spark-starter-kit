@@ -1,7 +1,12 @@
-import { Component } from 'react';
+import React, { Component } from 'react';
 import Quagga from 'quagga';
 
-class Scanner extends Component {
+// Define prop types
+interface ScannerProps {
+  onDetected: (result: any) => void;
+}
+
+class Scanner extends Component<ScannerProps> {
   componentDidMount() {
     Quagga.init(
       {
@@ -10,7 +15,7 @@ class Scanner extends Component {
           constraints: {
             width: 640,
             height: 320,
-            facingMode: 'environment',
+            facingMode: 'environment', // Use rear camera
           },
         },
         locator: {
@@ -33,7 +38,7 @@ class Scanner extends Component {
         },
         numOfWorkers: 4,
         decoder: {
-          readers: [ "ean_reader" ,  "ean_8_reader",],
+          readers: ["ean_reader", "ean_8_reader"],
           debug: {
             drawBoundingBox: true,
             showFrequency: true,
@@ -43,24 +48,27 @@ class Scanner extends Component {
         },
         locate: true,
       },
-      (err) => {
+      (err:any) => {
         if (err) {
-          return console.log(err);
+          console.error(err);
+          return;
         }
         Quagga.start();
       }
     );
+
     Quagga.onDetected(this._onDetected);
   }
 
   componentWillUnmount() {
     Quagga.offDetected(this._onDetected);
+    Quagga.stop();
   }
 
-  _onDetected = (result) => {
+  
+  _onDetected = (result: any) => {
     console.log(result); // Debug log
-    // eslint-disable-next-line react/prop-types
-    this.props.onDetected(result);
+    this.props.onDetected(result); // Pass result to the parent component
   };
 
   render() {

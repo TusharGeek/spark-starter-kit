@@ -1,99 +1,97 @@
-import { Component } from 'react';
+import React, { Component } from 'react';
 import Scanner from './Scanner';
-import { Link } from 'react-router-dom';
-// import { Exception } from '@zxing/library';
+import {
+  Box,
+  Button,
+  Modal,
+  Text,
+  Container,
+  Paper,
+} from '@mantine/core';
 
-class BarcodeScanner extends Component {
-  state = {
-    results: [],
+// Define the interface for the state
+interface BarcodeScannerState {
+  scanning: boolean;
+  latestCode: string;
+  modalVisible: boolean;
+}
+
+interface BarcodeResult {
+  codeResult?: {
+    code: string;
+  };
+}
+
+interface BarcodeScannerProps {
+  onBarcodeDetected: (code: string) => void; // Callback function to pass the scanned barcode
+}
+
+class BarcodeScanner extends Component<BarcodeScannerProps, BarcodeScannerState> {
+  state: BarcodeScannerState = {
     scanning: false,
     latestCode: '',
     modalVisible: false,
   };
 
   _scan = () => {
-    this.setState({ scanning: !this.state.scanning });
+    this.setState((prevState) => ({ scanning: !prevState.scanning }));
   };
 
-  _onDetected = (result) => {
+  _onDetected = (result: BarcodeResult) => {
     try {
-      // console.log(result && result.codeResult && result.codeResult.code);
       const code = result?.codeResult?.code;
       if (code) {
-        this.setState(() => ({
-          // results: [...prevState.results, result],
+        this.setState({
           scanning: false,
           latestCode: code,
           modalVisible: true,
-        }));
-        console.log(this.state.results)
-      }
+        });
 
+        // Call the callback to pass the scanned barcode to the parent component
+        this.props.onBarcodeDetected(code);
+      }
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
   };
-  
-
 
   render() {
+    const { latestCode, modalVisible, scanning } = this.state;
+
     return (
-      <div>
-        <Link to="/">
-          <div style={{ marginRight: 10 }} color="secondary">
-            &lt;
-          </div>
-        </Link>
-        <span>Barcode Scanner</span>
+      <Container>
+        <Paper shadow="md" p="md">
+          {/* Scanner Section */}
+          <Box mb={16}>
+            <Text>Scan your product using the barcode scanner below:</Text>
+            <Button mt={16} color="indigo" onClick={this._scan}>
+              {scanning ? 'Stop Scanner' : 'Start Scanner'}
+            </Button>
+          </Box>
 
-        <div style={{ marginTop: 30, width: 640, height: 320 }}>
-          <Scanner onDetected={this._onDetected} />
-        </div>
+          {/* Show Scanner */}
+          {scanning && (
+            <Box
+              mt={16}
+              sx={{
+                width: '100%',
+                maxWidth: '100%',
+                height: 'auto',
+                aspectRatio: '16/9', // Keep a consistent aspect ratio
+                border: '2px solid gray',
+                borderRadius: '8px',
+              }}
+            >
+              <Scanner onDetected={this._onDetected} />
+            </Box>
+          )}
+        </Paper>
 
-        <textarea
-          style={{ fontSize: 32, width: 320, height: 100, marginTop: 30 }}
-          rows={3}
-          value={this.state.latestCode || 'No data scanned'}
-          readOnly
-        />
-
-        <textarea
-          style={{ fontSize: 32, width: 320, height: 100, marginTop: 30 }}
-          rows={3}
-          value={String(this.state.modalVisible)}
-          readOnly
-        />
-
-        {console.log(this.state.results)}
-
-        <button onClick={() => {
-          try {
-            // console.log(this.state.results)
-            if (this.state.results.length == 0 && this.state.latestCode !== '') {
-              this.setState((prevState) => ({
-                results: [...prevState.results, this.state.latestCode],
-              }));
-              
-            }
-            else if(!this.state.results.some(r => r === this.state.latestCode)){
-              this.setState((prevState) => ({
-                results: [...prevState.results, this.state.latestCode],
-              }));
-            }
-            else {
-              // console.log("not saved" + this.state.latestCode)
-              throw new Error("not saved" + this.state.latestCode)
-            }
-            // console.log(this.state.results)
-
-          }
-          catch (e) {
-            console.log(e.message)
-          }
-
-        }} >Save</button>
-
-      </div>
+        {/* Display latest scan result */}
+        <Modal opened={modalVisible} onClose={() => this.setState({ modalVisible: false })} title="Scan Result">
+          <Text size="lg">Scanned Code: {latestCode || 'No data scanned'}</Text>
+        </Modal>
+      </Container>
     );
   }
 }

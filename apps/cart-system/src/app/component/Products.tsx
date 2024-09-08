@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, Image, Title, Flex, Badge, Button, Notification, Text } from "@mantine/core";
+import { Box, Image, Title, Flex, Badge, Button, Notification, Text, Loader } from "@mantine/core";
 import { Product } from "../pages/Cart";
 
 interface ProductCardProps {
@@ -9,13 +9,15 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [aiResponse, setAiResponse] = useState<string | null>(null); 
   const [error, setError] = useState<string | null>(null);
-
+  const [loading, setLoading] = useState<boolean>(false); // State to manage loading
 
   const handleAiQuery = async () => {
     console.log(product.name);
 
-    const apiUrl = `https://bamboo-basis-434518-f9.de.r.appspot.com/generate?product_id=WHAT%20IS%20Denim:GraniteGrey`;
+    const apiUrl = `https://bamboo-basis-434518-f9.de.r.appspot.com/generate?product_id=WHAT%20IS%20${encodeURIComponent(product.name)}`;
   
+    setLoading(true); // Start the loader when the API call begins
+
     try {
       const response = await fetch(apiUrl, {
         method: "GET", 
@@ -34,13 +36,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       console.log(data);
       
       // Set the AI response message
-      setAiResponse(data?.message || "No response from AI");
+      setAiResponse(data?.result || "No response from AI");
     } catch (err) {
       console.error("Error fetching AI response:", err);
       setError("Error fetching AI response");
+    } finally {
+      setLoading(false); // Stop the loader when the API call is finished
     }
   };
-  
 
   return (
     <Box
@@ -71,9 +74,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </Box>
       </Flex>
 
-      {/* AI Query Button */}
-      <Button mt={16} onClick={handleAiQuery}>
-        Ask AI About {product.name}
+      {/* AI Query Button with Loading */}
+      <Button mt={16} onClick={handleAiQuery} loading={loading}>
+        {loading ? "Fetching AI Response..." : `Ask AI About ${product.name}`}
       </Button>
 
       {/* AI Response Notification */}

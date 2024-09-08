@@ -1,4 +1,4 @@
-# Fashion Store Self-Checkout System (e-Cart)
+# Fashion Store Self-Checkout System (Jaldi Cart)
 
 ## 🗒️ Project Overview
 

@@ -57,13 +57,15 @@ const Cart = () => {
       setMessage("Please enter a valid numeric product ID.");
       return;
     }
-
+    console.log(productId);
+    
     try {
       const response = await fetch(`${onlineEndPoint}/products/${productId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include"
       });
 
       const result = await response.json();

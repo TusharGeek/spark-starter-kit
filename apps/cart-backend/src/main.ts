@@ -3,7 +3,7 @@ import * as path from 'path';
 import cors from "cors";
 import categoriesRoute from "./routes/categories.js";
 import productRoute from "./routes/products.js";
-import customersRoutes from "./routes/products.js";
+import customersRoutes from "./routes/customers.js";
 import barCoderRoutes from "./routes/barcode.js";
 import paymentRoutes from "./routes/Gateway.js";
 import orderItemRoute from "./routes/orderItem.js"

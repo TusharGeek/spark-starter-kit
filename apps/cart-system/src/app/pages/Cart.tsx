@@ -12,7 +12,9 @@ import {
 import { IconCheck, IconX } from "@tabler/icons-react";
 import ProductCard from "../component/Products";
 import { loadStripe, Stripe } from "@stripe/stripe-js";
-import {onlineEndPoint, localEndPoint} from "../endPoint";
+import { onlineEndPoint } from "../endPoint";
+import BarcodeScanner from "../component/BarcodeScanner"; // Import BarcodeScanner
+
 const stripePromise: Promise<Stripe | null> = loadStripe(
   "pk_test_51P66VjSBINuBNg5tRulpGci113qdQRkOisw8aDnZI7CAa66Yw0QKKxqp9SU46ZLYYFSh5u2avLps9QHJQhJTV7Dh00BeNAEodP"
 );
@@ -30,9 +32,10 @@ const Cart = () => {
   const [productId, setProductId] = useState<string>(""); 
   const [message, setMessage] = useState<string>(""); 
   const [productIdError, setProductIdError] = useState<boolean>(false); 
-  const [email, setEmail] = useState<string>(""); // State for email address
-  const [emailError, setEmailError] = useState<boolean>(false); // State for email validation
+  const [email, setEmail] = useState<string>(""); 
+  const [emailError, setEmailError] = useState<boolean>(false); 
   const [cart, setCart] = useState<Product[]>([]);
+  const [showScanner, setShowScanner] = useState<boolean>(false); 
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setProductId(event.target.value);
@@ -43,13 +46,11 @@ const Cart = () => {
     setEmailError(!validateEmail(event.target.value));
   };
 
-
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  // Fetch product by ID and add it to the cart
   const handleProductIdSubmit = async () => {
     if (productId.trim() === "" || isNaN(Number(productId))) {
       setProductIdError(true);
@@ -84,16 +85,13 @@ const Cart = () => {
     }
   };
 
-  // Handle checkout process using Stripe
   const handleCheckout = async () => {
     try {
-      // Calculate total amount
       const totalAmount = cart.reduce(
         (acc, product) => acc + parseFloat(product.price) * product.quantity,
         0
       );
 
-      // Call your backend to create a Stripe session
       const response = await fetch(`${onlineEndPoint}/payment/`, {
         method: "POST",
         headers: {
@@ -108,7 +106,6 @@ const Cart = () => {
 
       const session = await response.json();
 
-      // Redirect to Stripe Checkout
       const stripe = await stripePromise;
       if (stripe) {
         const { error } = await stripe.redirectToCheckout({
@@ -124,10 +121,14 @@ const Cart = () => {
     }
   };
 
+  const handleBarcodeDetected = (code: string) => {
+    setProductId(code);
+    setShowScanner(false);
+  };
+
   return (
     <Box py={32}>
       <Container>
-        {/* Add Product to Cart */}
         <Flex justify="space-between" align="center">
           <Title order={2}>Add Product</Title>
         </Flex>
@@ -143,6 +144,11 @@ const Cart = () => {
             Submit Product ID
           </Button>
 
+          {/* Button to toggle barcode scanner */}
+          <Button mt={16} color="indigo" onClick={() => setShowScanner(!showScanner)}>
+            {showScanner ? "Hide Scanner" : "Scan Barcode"}
+          </Button>
+
           {message && (
             <Notification
               mt={16}
@@ -155,6 +161,13 @@ const Cart = () => {
           )}
         </Box>
 
+        {/* Barcode Scanner */}
+        {showScanner && (
+          <Box mt={32}>
+            <BarcodeScanner onBarcodeDetected={handleBarcodeDetected} />
+          </Box>
+        )}
+
         {/* Cart Items Section */}
         <Box mt={16}>
           <Title order={3}>Cart Items</Title>
@@ -165,7 +178,6 @@ const Cart = () => {
           )}
         </Box>
 
-        {/* Email Input for Checkout */}
         {cart.length > 0 && (
           <Box mt={16}>
             <TextInput
@@ -178,13 +190,12 @@ const Cart = () => {
           </Box>
         )}
 
-        {/* Proceed to Payment Button */}
         {cart.length > 0 && (
           <Box mt={32}>
             <Button
               color="green"
               onClick={handleCheckout}
-              disabled={email === "" || emailError} // Disable if email is empty or invalid
+              disabled={email === "" || emailError}
             >
               Proceed to Payment
             </Button>
